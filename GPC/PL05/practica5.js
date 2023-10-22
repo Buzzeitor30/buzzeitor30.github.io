@@ -66,6 +66,10 @@ function init() {
     camera = new THREE.PerspectiveCamera(75, window.innerWidth/window.innerHeight, 1, 1000)
     camera.position.set(200, 300, 200)
     camera.lookAt(0, 1, 0)
+
+    //Luces
+    const ambiental = new THREE.AmbientLight(0x222222);
+    scene.add(ambiental);
     //Control camera
     const controls = new OrbitControls(camera, renderer.domElement)
     controls.maxZoom = 10.0
@@ -140,6 +144,7 @@ function loadScene() {
     const disco = new THREE.Mesh(new THREE.CylinderGeometry(22, 22, 6, 32), material_robot)
     antebrazo.add(disco)
 
+    
     const nervio1 = new THREE.Mesh(new THREE.BoxGeometry(4, 80, 4), material_robot)
     nervio1.position.x = 10
     nervio1.position.z = -5
@@ -209,11 +214,12 @@ function loadScene() {
     
 
     const suelo = new THREE.Mesh(new THREE.PlaneGeometry(1000, 1000, 100, 100), material_robot) 
+    suelo.receiveShadow = true
     suelo.rotation.x = -Math.PI/2;
  
     robot.add(base)
     robot.add(brazo)
-
+    robot.castShadow = true
     scene.add(new THREE.AxesHelper(200))
     scene.add(robot)
     scene.add(suelo)
