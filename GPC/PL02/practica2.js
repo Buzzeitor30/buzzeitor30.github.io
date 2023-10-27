@@ -104,9 +104,9 @@ function loadScene() {
         8, 1, 3, 8, 3, 10, 
         ]
     
-    pinzaGeometry.setIndex(indices)
     pinzaGeometry.setAttribute('position', new THREE.Float32BufferAttribute(vertices, 3))
     pinzaGeometry.computeVertexNormals()
+    pinzaGeometry.setIndex(indices) // Si esto va antes, no se calculan las normales como pide el ejercicio
     
     const pinzaD = new THREE.Mesh(pinzaGeometry, material_2)
     pinzaD.rotation.x = -Math.PI/2

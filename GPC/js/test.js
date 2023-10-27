@@ -1,188 +1,213 @@
 /**
-  test.js
-  Ejemplo Three.js_r140: Cubo RGB con iluminacion y textura
+ * EscenaBasica.js
+ *
+ * Seminario GPC #2. Escena basica con geometrias predefinidas,
+ * transformaciones y objetos importados
+ */
 
-  Cubo con color por vertice y mapa de uvs usando la clase BufferGeometry.
-  La textura es una unica imagen en forma de cubo desplegado en cruz horizontal.
-  Cada cara se textura segun mapa uv en la textura.
-  En sentido antihorario las caras son:
-    Delante:   7,0,3,4
-    Derecha:   0,1,2,3
-    Detras:    1,6,5,2
-    Izquierda: 6,7,4,5
-    Arriba:    3,2,5,4
-    Abajo:     0,7,6,1
-  Donde se han numerado de 0..7 los ertices del cubo.
-  Los atributos deben darse por vertice asi que necesitamos 8x3=24 vertices pues
-  cada vertice tiene 3 atributos de normal, color y uv al ser compartido por 3 caras. 
+// Modulos necesarios
+import * as THREE from "three";
+import {GLTFLoader} from "../lib/GLTFLoader.module.js";
+// Variables de consenso
+let renderer, scene, camera;
 
-  @author rvivo@upv.es (c) Libre para fines docentes
-*/
-
-var renderer, scene, camera, cubo;
-var cameraControls;
-var angulo = -0.01;
-
+// Otras globales
+let robot;
+let brazo;
+let angulo = 0;
+// Acciones
 init();
-loadCubo(1.0);
+loadScene();
 render();
 
 function init()
 {
-  renderer = new THREE.WebGLRenderer();
-  renderer.setSize( window.innerWidth, window.innerHeight );
-  renderer.setClearColor( new THREE.Color(0xFFFFFF) );
-  document.getElementById('container').appendChild( renderer.domElement );
+    // Instanciar el motor
+    renderer = new THREE.WebGLRenderer();
+    renderer.setSize(window.innerWidth,window.innerHeight);
+    document.getElementById('container').appendChild( renderer.domElement );
 
-  scene = new THREE.Scene();
+    // Instanciar la escena
+    scene = new THREE.Scene();
+    scene.background = new THREE.Color(0.5,0.5,0.5);
 
-  var aspectRatio = window.innerWidth / window.innerHeight;
-  camera = new THREE.PerspectiveCamera( 50, aspectRatio , 0.1, 100 );
-  camera.position.set( 1, 1.5, 2 );
-  camera.lookAt(0,0,0);
-
-  cameraControls = new THREE.OrbitControls( camera, renderer.domElement );
-  cameraControls.target.set( 0, 0, 0 );
-
-  window.addEventListener('resize', updateAspectRatio );
+    // Instanciar la camara
+    camera = new THREE.PerspectiveCamera(75,window.innerWidth/window.innerHeight,1,2000);
+    camera.position.set(0,200,170);
+    camera.lookAt(0,120,0);
 }
 
-function loadCubo(lado)
+function loadScene()
 {
-  // Instancia el objeto BufferGeometry
-	var malla = new THREE.BufferGeometry();
-  // Construye la lista de coordenadas y colores por vertice
-  var semilado = lado/2.0;
-  var coordenadas = [ // 6caras x 4vert x3coor = 72float
-                // Front 
-                -semilado,-semilado, semilado, // 7 -> 0
-                semilado,-semilado, semilado,  // 0 -> 1
-                semilado, semilado, semilado,  // 3 -> 2
-                -semilado, semilado, semilado, // 4 -> 3
-                // Right
-                semilado,-semilado, semilado,  // 0 -> 4
-                semilado,-semilado,-semilado,  // 1 -> 5
-                semilado, semilado,-semilado,  // 2 -> 6
-                semilado, semilado, semilado,  // 3 -> 7
-                // Back
-                semilado,-semilado,-semilado,  // 1 -> 8
-                -semilado,-semilado,-semilado, // 6 -> 9
-                -semilado, semilado,-semilado, // 5 ->10
-                semilado, semilado,-semilado,  // 2 ->11
-                // Left
-                -semilado,-semilado,-semilado, // 6 ->12
-                -semilado,-semilado, semilado, // 7 ->13
-                -semilado, semilado, semilado, // 4 ->14
-                -semilado, semilado,-semilado, // 5 ->15
-                // Top
-                semilado, semilado, semilado,  // 3 ->16
-                semilado, semilado,-semilado,  // 2 ->17
-                -semilado, semilado,-semilado, // 5 ->18
-                -semilado, semilado, semilado, // 4 ->19
-                // Bottom
-                semilado,-semilado, semilado,  // 0 ->20
-                -semilado,-semilado, semilado, // 7 ->21 
-                -semilado,-semilado,-semilado, // 6 ->22
-                semilado,-semilado,-semilado   // 1 ->23
-  ]
-  var colores = [ // 24 x3
-                0,0,0,   // 7
-                1,0,0,   // 0
-                1,1,0,   // 3
-                0,1,0,   // 4
 
-                1,0,0,   // 0
-                1,0,1,   // 1
-                1,1,1,   // 2
-                1,1,0,   // 3
+    // init robot
+    robot = new THREE.Object3D();
+    // Material a utilizar
+    const material = new THREE.MeshBasicMaterial({wireframe:true,color:'yellow'})
+        
 
-                1,0,1,   // 1
-                0,0,1,   // 6
-                0,1,1,   // 5
-                1,1,1,   // 2
+    // Suelo
+    const suelo = new THREE.Mesh( new THREE.PlaneGeometry(1000,1000, 10,10), material );
+    suelo.rotation.x = -Math.PI/2;
 
-                1,1,0,   // 3
-                0,0,0,   // 7
-                0,1,0,   // 4
-                0,1,1,   // 5
+    // base
+    const base = new THREE.Mesh( new THREE.CylinderGeometry( 50,50,15, 20 ) , material );
+    base.position.y = 10;
+    robot.add(base);
 
-                1,1,0,   // 3
-                1,1,1,   // 2
-                0,1,1,   // 5
-                0,1,0,   // 4
+    //brazo
+    brazo = new THREE.Object3D();
+    const eje = new THREE.Mesh( new THREE.CylinderGeometry( 20,20,18, 20 ) , material );
+    eje.rotation.x = -Math.PI/2;
+    eje.position.y = -60;
+    brazo.add(eje);
 
-                1,0,0,   // 0
-                0,0,0,   // 7
-                0,0,1,   // 6
-                1,0,1    // 1
-  ]
-  var normales = [ // 24 x3
-                0,0,1, 0,0,1, 0,0,1, 0,0,1,      // Front
-                1,0,0, 1,0,0, 1,0,0, 1,0,0,      // Right
-                0,0,-1, 0,0,-1, 0,0,-1, 0,0,-1,  // Back 
-                -1,0,0, -1,0,0, -1,0,0, -1,0,0,  // Left
-                0,1,0, 0,1,0, 0,1,0, 0,1,0,      // Top 
-                0,-1,0, 0,-1,0, 0,-1,0, 0,-1,0   // Bottom
-                ];
-  var uvs = [  // 24 x2
-               // Front
-                0/4,1/3 , 1/4,1/3 , 1/4,2/3 , 0/4,2/3 , // 7,0,3,4
-                1/4,1/3 , 2/4,1/3 , 2/4,2/3 , 1/4,2/3 , // 0,1,2,3
-                2/4,1/3 , 3/4,1/3 , 3/4,2/3 , 2/4,2/3 , // 1,6,5,2
-                3/4,1/3 , 4/4,1/3 , 4/4,2/3 , 3/4,2/3 , // 6,7,4,5
-                1/4,2/3 , 2/4,2/3 , 2/4,3/3 , 1/4,3/3 , // 3,2,5,4
-                1/4,1/3 , 1/4,0/3 , 2/4,0/3 , 2/4,1/3   // 0,7,6,1
-            ];
-  var indices = [ // 6caras x 2triangulos x3vertices = 36
-              0,1,2,    2,3,0,    // Front
-              4,5,6,    6,7,4,    // Right 
-              8,9,10,   10,11,8,  // Back
-              12,13,14, 14,15,12, // Left
-              16,17,18, 18,19,16, // Top
-              20,21,22, 22,23,20  // Bottom
-                 ];
+    const esparrago = new THREE.Mesh( new THREE.BoxGeometry(18,120,12), material );
+    brazo.add(esparrago);
 
-  scene.add( new THREE.DirectionalLight() );
+    const rotula = new THREE.Mesh( new THREE.SphereGeometry(20,10,10), material);
+    rotula.position.y = 60;
+    brazo.add(rotula);
 
-  // Geometria por att arrays en r140
-  malla.setIndex( indices );
-  malla.setAttribute( 'position', new THREE.Float32BufferAttribute(coordenadas,3));
-  malla.setAttribute( 'normal', new THREE.Float32BufferAttribute(normales,3));
-  malla.setAttribute( 'color', new THREE.Float32BufferAttribute(colores,3));
-  malla.setAttribute( 'uv', new THREE.Float32BufferAttribute(uvs,2));
+    brazo.position.y = 70;
+    robot.add(brazo);
 
-  // Configura un material
-  var textura = new THREE.TextureLoader().load( 'images/ilovecg.png' );
-  var material = new THREE.MeshLambertMaterial( { vertexColors: true, map: textura, side: THREE.DoubleSide } );
+    //antebrazo
+    let antebrazo = new THREE.Object3D();
+    const disco = new THREE.Mesh( new THREE.CylinderGeometry( 22,22,6, 20 ) , material );
+    antebrazo.add(disco);
 
-  // Construye el objeto grafico 
-  console.log(malla);   //-> Puedes consultar la estructura del objeto
-  cubo = new THREE.Mesh( malla, material );
+    let nervios = new THREE.Object3D();
+    nervios.position.y = 40;
 
-	// Añade el objeto grafico a la escena
-	scene.add( cubo );
+    let nervio_1 = new THREE.Mesh( new THREE.BoxGeometry(4,80,4), material );
+    let nervio_2 = new THREE.Mesh( new THREE.BoxGeometry(4,80,4), material );
+    let nervio_3 = new THREE.Mesh( new THREE.BoxGeometry(4,80,4), material );
+    let nervio_4 = new THREE.Mesh( new THREE.BoxGeometry(4,80,4), material );
+
+    nervio_1.position.x = 7;
+    nervio_2.position.x = 7;
+    nervio_3.position.x = -7;
+    nervio_4.position.x = -7;
+
+    nervio_1.position.z = 7;
+    nervio_2.position.z = -7;
+    nervio_3.position.z = 7;
+    nervio_4.position.z = -7;
+
+    nervios.add(nervio_1);
+    nervios.add(nervio_2);
+    nervios.add(nervio_3);
+    nervios.add(nervio_4);
+
+    antebrazo.add(nervios)
+
+    const mano = new THREE.Mesh( new THREE.CylinderGeometry( 15,15,40, 20 ) , material );
+    mano.rotation.x = -Math.PI/2;
+    mano.position.y = 80;
+    antebrazo.add(mano);
+
+    antebrazo.position.y = 60;
+    brazo.add(antebrazo);
+
+    // pinzas
+
+    const pinza_geometry = new THREE.BufferGeometry();
+
+    const v_positions = new Float32Array([
+        0,0,0, 19,20,0, 19,0,0, // T1
+        0,0,0, 0,20,0, 19,20,0, // T2
+        19,0,0, 19,20,0, 38,17,0, // T3
+        38,3,0, 19,0,0, 38,17,0,// T4
+
+        0,0,4, 19,0,4, 19,20,4, // T1_1
+        0,0,4, 19,20,4, 0,20,4, // T2_1
+        19,0,4, 38,17,2, 19,20,4, // T3_1
+        38,3,2, 38,17,2, 19,0,4, // T4_1
+
+        0,0,0,  19,0,0, 0,0,4, //S1
+        0,0,4, 19,0,0, 19,0,4, //S2
+        19,0,0, 38,3,0, 19,0,4, //S3
+        19,0,4, 38,3,0, 38,3,2, //S4
+        38,3,0, 38,17,0, 38,3,2, //S5
+        38,17,0, 38,17,2, 38,3,2, //S6
+        38,17,0, 19,20,0, 38,17,2, //S7
+        38,17,2, 19,20,0, 19,20,4, //S8
+        19,20,0, 0,20,0, 19,20,4, //S9
+        19,20,4, 0,20,0, 0,20,4, //S10
+        0,20,0, 0,0,0, 0,20,4, //S11
+        0,0,0, 0,0,4, 0,20,4 //S12
+    ]);
+
+    const v_normals = new Float32Array([
+        0,0,-1, 0,0,-1, 0,0,-1, //T1
+        0,0,-1, 0,0,-1, 0,0,-1, //T2
+        0,0,-1, 0,0,-1, 0,0,-1, //T3
+        0,0,-1, 0,0,-1, 0,0,-1, //T4
+
+        0,0,1, 0,0,1, 0,0,1, //T1_1
+        0,0,1, 0,0,1, 0,0,1, //T2_1
+        40,0,380, 40,0,380, 40,0,380, //T3_1  
+        40,0,380, 40,0,380, 40,0,380, //T4_1
+
+        0,-1,0, 0,-1,0, 0,-1,0, //S1
+        0,-1,0, 0,-1,0, 0,-1,0, //S2
+        1/19,-1/3,0, 1/19,-1/3,0, 1/19,-1/3,0, //S3
+        1/19,-1/3,0, 1/19,-1/3,0, 1/19,-1/3,0, //S4
+        1,0,0, 1,0,0, 1,0,0, //S5
+        1,0,0, 1,0,0, 1,0,0, //S6
+        1/19,1/3,0, 1/19,1/3,0, 1/19,1/3,0, //S7
+        1/19,1/3,0, 1/19,1/3,0, 1/19,1/3,0, //S8
+        0,1,0, 0,1,0, 0,1,0, //S9
+        0,1,0, 0,1,0, 0,1,0, //S10
+        -1,0,0, -1,0,0, -1,0,0, //S11
+        -1,0,0, -1,0,0, -1,0,0, //S12
+    ]);
+    pinza_geometry.setAttribute('position', new THREE.BufferAttribute(v_positions,3));
+    pinza_geometry.setAttribute('normal', new THREE.BufferAttribute(v_normals,3));
+    console.log(pinza_geometry)
+
+    const pinza = new THREE.Mesh(pinza_geometry,material);
+    const pinza2 = pinza.clone();
+
+    pinza.position.z = 10;
+    pinza.position.y = 10;
+    pinza.rotation.x = -Math.PI/2;
+    mano.add(pinza);
+
+    pinza2.position.z = -10;
+    pinza2.position.y = -10;
+    pinza2.rotation.x = Math.PI/2;
+    mano.add(pinza2);
+
+    scene.add(robot);
+    scene.add(suelo);
+
 }
 
-function updateAspectRatio()
+
+function init_stl_model(stl_geometry, material)
 {
-  renderer.setSize(window.innerWidth, window.innerHeight);
-  camera.aspect = window.innerWidth / window.innerHeight;
-  camera.updateProjectionMatrix();
+    const mesh = new THREE.Mesh( stl_geometry, material );
+
+    mesh.castShadow = true;
+    mesh.receiveShadow = true;
+
+    return mesh
+}
+
+
+
+
+function render()
+{
+    requestAnimationFrame(render);
+    update();
+    renderer.render(scene,camera);
 }
 
 function update()
 {
-  // Cambios para actualizar la camara segun mvto del raton
-  cameraControls.update();
-
-  // Movimiento propio del cubo
-  cubo.rotation.y += angulo;
-  cubo.rotation.x += angulo/2;
-}
-
-function render()
-{
-	requestAnimationFrame( render );
-	update();
-	renderer.render( scene, camera );
+    angulo += 0.003;
+    robot.rotation.y = angulo;
 }

@@ -126,7 +126,6 @@ function loadScene() {
     mano.position.y = 87.5
     antebrazo.add(mano)
     mano.rotation.x = -Math.PI/2
-    console.log(mano.position.y)
     const pinzaGeometry = new THREE.BufferGeometry()
     
     const vertices = [ //12 vertices x 3 coord = 36
@@ -153,11 +152,11 @@ function loadScene() {
         1, 0, 2, 1, 2, 3,
         8, 1, 3, 8, 3, 10, 
         ]
-    
-    pinzaGeometry.setIndex(indices)
+
     pinzaGeometry.setAttribute('position', new THREE.Float32BufferAttribute(vertices, 3))
     pinzaGeometry.computeVertexNormals()
-    
+    pinzaGeometry.setIndex(indices) // Si esto va antes, no se calculan las normales como pide el ejercicio
+
     const pinzaD = new THREE.Mesh(pinzaGeometry, material_robot)
     pinzaD.rotation.x = -Math.PI/2
     const pinzaI = pinzaD.clone()
