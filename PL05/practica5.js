@@ -34,10 +34,12 @@ let pinzaI;
 //Materiales
 let material_robot, material_suelo, material_brazo, material_ante, material_rotula, material_pinzas;
 //Acciones
+let lastTime = null;
+let delta;
 init();
 loadScene();
 setupGUI();
-render();
+render(lastTime);
 
 function setupGUI() {
     effectController = {
@@ -333,7 +335,10 @@ const directionalLight = new THREE.DirectionalLight(0xffff99,0.2)
     renderer.shadowMap.type = THREE.PCFSoftShadowMap;
 }
 
-function render() {
+function render(nowmsec) {
+    lastTime = lastTime || nowmsec-1000/60
+    delta = Math.min(200, nowmsec - lastTime)
+    lastTime = delta
     requestAnimationFrame(render)
     let x = Math.min(window.innerWidth, window.innerHeight) / 4
     renderer.clear()
@@ -380,12 +385,13 @@ function animate() {
 }
 
 function movimientoRobot(e) {
+    console.log(delta)
     if(e.key == "ArrowUp")
-        robot.position.z -= 1
+        robot.position.z -= 0.01 * delta
     if (e.key == "ArrowDown")
-        robot.position.z += 1
+        robot.position.z += 0.01 * delta
     if (e.key == "ArrowRight")
-        robot.position.x += 1
+        robot.position.x += 0.01 * delta
     if (e.key == "ArrowLeft")
-        robot.position.x -= 1
+        robot.position.x -= 0.01 * delta
 }
