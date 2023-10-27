@@ -25,7 +25,6 @@ let material_robot;
 //Acciones
 let lastTime = null;
 let delta;
-//Acciones
 init();
 loadScene();
 setupGUI();
