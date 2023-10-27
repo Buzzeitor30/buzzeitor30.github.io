@@ -16,7 +16,7 @@ let pinzas = new THREE.Object3D()
 //GUI
 var gui;
 //Texturas
-let images_path="./images/"
+let images_path="/images/"
 console.log(images_path)
 let textsuelo;
 let textbase
