@@ -266,11 +266,11 @@ const directionalLight = new THREE.DirectionalLight(0xffff99,0.2)
         0, 1, 1, 1,
         0, 0, 1, 0,
     ];
-    
+    pinzaGeometry.setIndex(indices)
     pinzaGeometry.setAttribute('uv', new THREE.Float32BufferAttribute(uvs, 2));
     pinzaGeometry.setAttribute('position', new THREE.Float32BufferAttribute(vertices, 3))
     pinzaGeometry.computeVertexNormals()
-    pinzaGeometry.setIndex(indices) // esta instruccion es la ultima para calcular los vectores normales de cada vértice en cada cara
+
     pinzaD = new THREE.Mesh(pinzaGeometry, material_pinzas)
     pinzaD.castShadow = true
     pinzaD.rotation.x = -Math.PI/2
