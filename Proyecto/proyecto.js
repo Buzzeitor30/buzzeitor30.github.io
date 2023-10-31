@@ -1,6 +1,8 @@
 import * as THREE from "../lib/three.module.js"
 import {OrbitControls} from "../lib/OrbitControls.module.js"
 import { GLTFLoader } from "../lib/GLTFLoader.module.js";
+import { FontLoader } from "../lib/FontLoader.module.js";
+import { TextGeometry } from "../lib/TextGeometry.module.js";
 import {TWEEN} from "../lib/tween.module.min.js";
 import {GUI} from "../lib/lil-gui.module.min.js"
 
@@ -13,7 +15,6 @@ let raycaster = new THREE.Raycaster()
 let ventana = new THREE.Object3D()
 let habitacion;
 //Iluminacion
-let spotLightHelper;
 let pointLightRed;
 let pointLightBlue;
 let ambientLight;
@@ -21,7 +22,6 @@ let focalLamp;
 let focalLamp2;
 let focalPrincipal;
 let focalPrincipal2;
-let focalPrincipal3;
 //Objetivos
 let dianas = []
 let arma;
@@ -29,7 +29,6 @@ let gui;
 //Texturas
 let textures_path = "images/textures/"
 //Materiales
-let material_suelo
 let material_pilar_ventana
 let material_base_ventana
 let paredes = []
@@ -41,7 +40,6 @@ let animacion = false;
 let tiempo_juego = 10 * 1000;
 //Puntuaiones
 let current_score = 0
-let max_score = 0
 //Acciones
 init()
 setupGUI()
@@ -66,28 +64,20 @@ function init() {
     //Eventos
     window.addEventListener("pointermove", onPointerMove)
     window.addEventListener("click", onPointerClick)
+    window.addEventListener('resize', updateAspectRatio );
 }
 
 function loadScene() {
     //Materiales 
     cargarTexturas()
     cargarIluminacion()
-    //Geometrias
-    const suelo = new THREE.Mesh(new THREE.PlaneGeometry(1600, 1600, 100, 100), material_suelo)
-    suelo.rotateX(-Math.PI/2)
-    //Ventana
+    //Entorno 
     cargarArmas()
     crearHabitacion()
     crearVentana()
     crearLamparas()
-        
-    
-
     scene.add(habitacion)
     scene.add(ventana)
-    scene.add(arma)
-    //scene.add(suelo)
-    
 }
 
 function render() {
@@ -148,16 +138,8 @@ function cargarTexturas() {
     let entorno = [textures_path+"red_bricks_04_diff_2k.jpg", textures_path+"red_bricks_04_diff_2k.jpg",
     textures_path+"red_bricks_04_diff_2k.jpg", textures_path+"plank_flooring_diff_2k.jpg",
     textures_path+"dark_brick_wall_diff_2k.jpg", textures_path+"dark_brick_wall_diff_2k.jpg"]
-    //Suelo
-    const text_suelo = text_loader.load(textures_path+"plank_flooring_diff_2k.jpg")
-    text_suelo.minFilter = THREE.NearestFilter
-    const text_suelo_nor = text_loader.load(textures_path+"plank_flooring_nor_gl_2k.jpg")
-    text_suelo_nor.minFilter = THREE.NearestFilter
-    material_suelo = new THREE.MeshStandardMaterial({map:text_suelo, normalMap:text_suelo_nor})
-
     //Ventana
     const text_pilar = text_loader.load(textures_path+"Marble021_1K-PNG_Color.png")
-    text_suelo_nor.minFilter = THREE.NearestFilter
     material_pilar_ventana = new THREE.MeshPhongMaterial({map:text_pilar,  envMap:cb_loader.load(entorno)})
 
     //Base
@@ -166,26 +148,24 @@ function cargarTexturas() {
     text_base.repeat.set(10, 1)
     material_base_ventana = new THREE.MeshPhongMaterial({map:text_base, shininess:5})
 
-
     //Habitacion
-    const text_paredes = text_loader.load(textures_path+"red_bricks_04_diff_2k.jpg")
     paredes.push(
-        new THREE.MeshStandardMaterial({map:text_paredes, side: THREE.BackSide})
+        new THREE.MeshStandardMaterial({map:text_loader.load(entorno[0]), side: THREE.BackSide})
     )
     paredes.push(
-        new THREE.MeshStandardMaterial({map:text_paredes, side: THREE.BackSide})
+        new THREE.MeshStandardMaterial({map:text_loader.load(entorno[1]), side: THREE.BackSide})
     )
     paredes.push(
-        new THREE.MeshStandardMaterial({map:text_paredes, side: THREE.BackSide})
+        new THREE.MeshStandardMaterial({map:text_loader.load(entorno[2]), side: THREE.BackSide})
     )
     paredes.push(
-        new THREE.MeshStandardMaterial({map:text_suelo, side: THREE.BackSide})
+        new THREE.MeshStandardMaterial({map:text_loader.load(entorno[3]), side: THREE.BackSide})
     )
     paredes.push(
-        new THREE.MeshStandardMaterial({map:text_paredes, side: THREE.BackSide})
+        new THREE.MeshStandardMaterial({map:text_loader.load(entorno[4]), side: THREE.BackSide})
     )
     paredes.push(
-        new THREE.MeshStandardMaterial({map:text_paredes, side: THREE.BackSide})
+        new THREE.MeshStandardMaterial({map:text_loader.load(entorno[5]), side: THREE.BackSide})
     )
 }
 
@@ -197,12 +177,13 @@ function cargarArmas() {
     {
         objeto.scene.scale.set(100,100,100);
         objeto.scene.position.y = 250;
-        objeto.scene.rotation.y = -Math.PI*0.25;
+        objeto.scene.rotation.y = -Math.PI*0.44;
         objeto.scene.position.z = -875
         objeto.scene.name = 'AK-47';
         objeto.scene.traverse(ob=>{if(ob.isObject3D) ob.castShadow=true;});
         arma = objeto.scene
         scene.add(arma)
+        gui.show()
         window.addEventListener("keydown", animarArma)
     });
 }
@@ -219,12 +200,12 @@ function setupGUI() {
     gui = new GUI().title("Opciones del juego")
 
     gui.add(effectController, "radius", 20, 100, 5).name("Radio de las dianas").listen().onChange(rad => {radius_diana=rad})
-    gui.add(effectController, "tiempo_ani", 0, 10, 0.5).name("Duración de la animación (s)").listen().onChange(t => {tiempo_ani=t*1000})
+    gui.add(effectController, "tiempo_ani", 0, 10, 0.5).name("Duración de la animación dianas (s)").listen().onChange(t => {tiempo_ani=t*1000})
     gui.add(effectController, "tiempo_juego", 10, 60, 5).name("Duracion del juego(s)").onChange(t => {tiempo_juego=t*1000})
     gui.add(effectController, "animacion").name("Animacion").listen().onChange(ani => {animacion=ani})
     gui.add(effectController, "n_dianas", 1, 5, 1).name("Numero de dianas").listen().onChange(n_di => {n_dianas=n_di})
     gui.add(effectController, "play").name("Play")
-    
+    gui.hide()
 }
 
 function crearVentana() {
@@ -294,20 +275,20 @@ function crearLamparas() {
     scene.add(lamparaD)
 }
 
-function crearDiana(diana_name, radio_diana) {
+function crearDiana(diana_name) {
     const material_anillo_exterior = new  THREE.MeshLambertMaterial({color:'red', side: THREE.DoubleSide})
     const material_anillo_medio = new THREE.MeshLambertMaterial({color:'black', side: THREE.DoubleSide})
     const material_anillo_interior = new THREE.MeshLambertMaterial({color:'yellow', side: THREE.DoubleSide})
 
-    let anillo_exterior = new THREE.Mesh(new THREE.RingGeometry(0.5*radio_diana,radio_diana, 100),material_anillo_exterior)
+    let anillo_exterior = new THREE.Mesh(new THREE.RingGeometry(0.5*radius_diana,radius_diana, 100),material_anillo_exterior)
     anillo_exterior.receiveShadow = true
     anillo_exterior.castShadow = true
     anillo_exterior.name = "Exterior"
-    let anillo_medio = new THREE.Mesh(new THREE.RingGeometry(0.1*radio_diana,0.5*radio_diana, 100),material_anillo_medio)
+    let anillo_medio = new THREE.Mesh(new THREE.RingGeometry(0.1*radius_diana,0.5*radius_diana, 100),material_anillo_medio)
     anillo_medio.receiveShadow = true
     anillo_medio.castShadow = true
     anillo_medio.name = "Medio"
-    let anillo_centro = new THREE.Mesh(new THREE.RingGeometry(0,radio_diana*0.1, 100),material_anillo_interior)
+    let anillo_centro = new THREE.Mesh(new THREE.RingGeometry(0,radius_diana*0.1, 100),material_anillo_interior)
     anillo_centro.castShadow = true
     anillo_centro.receiveShadow = true
     anillo_centro.name = "Centro"
@@ -369,8 +350,16 @@ function onPointerClick(event) {
     }
 }
 
+function updateAspectRatio()
+{
+    const ar = window.innerWidth/window.innerHeight;
+    renderer.setSize(window.innerWidth,window.innerHeight);
+    camera.aspect = ar;
+    camera.updateProjectionMatrix();
+}
+
 function actualizar_score(score) {
-    document.getElementById("score").textContent = score
+    document.getElementById("score").textContent = `Score ${score}`
 }
 
 function setRandomPositionDiana(diana) {
@@ -419,7 +408,7 @@ function jugar() {
     gui.controllers.forEach(c => {c.disable()})
     limpiarMemoria()
     for(let i=0; i < n_dianas; i++) {
-        crearDiana('Diana${i}', radius_diana)
+        crearDiana(i)
     }
     
     if(animacion)
@@ -436,11 +425,11 @@ function jugar() {
     let act = setInterval(() =>
     {
         tiempo_restante -= 1
-        contador.textContent = tiempo_restante
+        contador.textContent = `Tiempo ${tiempo_restante}`
         if(tiempo_restante <= 0)
             clearInterval(act)
     }, 1000)
-
+    
     gui.show()
 }
 
