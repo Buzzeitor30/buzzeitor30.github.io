@@ -200,7 +200,7 @@ function setupGUI() {
     gui = new GUI().title("Opciones del juego")
 
     gui.add(effectController, "radius", 20, 100, 5).name("Radio de las dianas").listen().onChange(rad => {radius_diana=rad})
-    gui.add(effectController, "tiempo_ani", 0, 10, 0.5).name("Duración de la animación dianas (s)").listen().onChange(t => {tiempo_ani=t*1000})
+    gui.add(effectController, "tiempo_ani", 2, 10, 0.5).name("Duración de la animación dianas (s)").listen().onChange(t => {tiempo_ani=t*1000})
     gui.add(effectController, "tiempo_juego", 10, 60, 5).name("Duracion del juego(s)").onChange(t => {tiempo_juego=t*1000})
     gui.add(effectController, "animacion").name("Animacion").listen().onChange(ani => {animacion=ani})
     gui.add(effectController, "n_dianas", 1, 5, 1).name("Numero de dianas").listen().onChange(n_di => {n_dianas=n_di})
